@@ -36,7 +36,7 @@ include 'connect_to_db.php';
 		padding: 10px;
 	}
 	.reply_Comment{
-		display: block;
+		display: none;
 	}
 </style>
 	<script type="text/javascript">
@@ -93,7 +93,7 @@ include 'connect_to_db.php';
 
 				var clickID = this.name.split("-");
 				var repID = clickID[2];
-				if($("#reply_c_"+repID).val()==="")
+				if ($("#reply_c_"+repID).val()==="")
 				{
 					alert("Введите текст!");
 					return false;
@@ -135,23 +135,20 @@ include 'connect_to_db.php';
 					}
 				});
 			});
-			$(".reply_open").click(function (e) {
+			//$(".reply_open").click(function (e) {
+			$("div").on("click", " #comms .reply_open",function (e) {
 				e.preventDefault();
 				var clickID = this.id.split("-");
 				var commID = clickID[2];
-				//var myData = "replyComment=" + commID;
-				$(".reply_Comment").show();
+				$("#block-reply-"+commID).show();
 			});
+			$("div").on("click", " #comms .cancel_rep",function (e) {
+				e.preventDefault();
+				var clickID = this.id.split("-");
+				var commID = clickID[2];
+				$("#block-reply-"+commID).hide();
 
-		});
-		$("#CancRep").click(function (e) {
-			e.preventDefault();
-			$(".reply_Comment").hide("slow");
-			/*var clickID = this.name.split("-");
-			var commID = clickID[2];
-
-			$("#block-id-179").hide("slow");*/
-
+			});
 		});
 
 	</script>
@@ -183,12 +180,12 @@ if ($result->num_rows > 0) {
 		echo " ";
 		echo "<a href='#'  class='del_Comment' id='del-com-" . $row["id"] . "'>Удалить</a>";
 		echo "</div>";
-		echo "<div class='reply_Comment' id='block-id-'>";
+		echo "<div class='reply_Comment' id='block-reply-".$row["id"]."'>";
 		echo "<label>Ответ</label>";
 		echo '<textarea id="reply_c_' . $row["id"] . '" cols="30" rows="5" class="form-control"  placeholder="Добавьте ответ" ></textarea>';
 		echo "<div>";
 		echo "<button id='AddRep' class='btn btn-primary' name='rep-com-" . $row["id"] . "'>Ответить</button>";
-		echo "<button id='CancRep' class='btn btn-danger' name='canc-reply-" . $row["id"] . "'>Отмена</button>";
+		echo "<button  class='btn btn-danger cancel_rep' id='cancel-reply-" . $row["id"] . "'>Отмена</button>";
 		echo "</div>";
 		echo "</div>";
 		$sql_r = "SELECT * FROM reply WHERE id_com = " . $row["id"];
