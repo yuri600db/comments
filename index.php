@@ -6,34 +6,26 @@
 
 	<link href="bootstrap/bootstrap-3.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
 	<script src="bootstrap/bootstrap-3.3.7/dist/js/bootstrap.min.js"></script>
+</head>
+<body>
 <?php
 include 'connect_to_db.php';
+include 'func_comments.php';
 ?>
 <style type="text/css">
 	.block_comm{
+		border-style: groove;
+		border-width: 5px;
+		border-color: cadetblue;
+		border-radius: 8px;
+		padding: 5px;
 		background-color: lightblue;
-		margin-bottom: 10px;
+		background-image: linear-gradient(mediumslateblue, lightblue);
+
 	}
-    
-	#comms{
-		 list-style: none;
-		 margin-left: -30px;
-	 }
-	#comms li{
-		list-style: none;
-		background-color: grey;
-		margin-bottom: 10px;
-		padding: 10px;
-	}
-	.repl{
-		list-style: none;
-		margin-left: -30px;
-	}
-	.replli{
-		list-style: none;
-		background-color: lightgrey;
-		margin-bottom: 10px;
-		padding: 10px;
+	.users{
+		font-size: 20px;
+		font-style: oblique ;
 	}
 	.reply_Comment{
 		display: none;
@@ -44,42 +36,43 @@ include 'connect_to_db.php';
 
 			$("#AddComm").click(function (e) {
 				e.preventDefault();
-				if($("#commenT").val()==="")
+				if(($("#commenT").val()==="") || ($("#users").val()==="") || ($("#email_").val===""))
 				{
-					alert("Введите текст!");
+					alert("Заполните поля!");
 					return false;
 				}
-				var myData = "comm=" + $("#commenT").val();
+			
+				var myData = { comm: $("#commenT").val(), users: $("#users").val(), email_: $("#email_").val() };
 
 				jQuery.ajax({
 					type: "POST",
-					url: "responce.php",
-					dataType: "text",
+					url: "response.php",
 					data: myData,
-					success: function(responce) {
-						$("#comms").append(responce);
+					success:  function(response) {
+						$("#comms").append(response);
 						$("#commenT").val('');
-
+						$("#users").val('');
+						$("#email_").val('');
 					},
 					error:function(xhr, ajaxOptions, thrownError){
 						alert(thrownError);
 					}
 				});
 			});
+
 			$("body").on("click", "#comms .del_Comment",function (e) {
 
 				e.preventDefault();
 				var clickID = this.id.split("-");
 				var commID = clickID[2];
-				var myData = "deleteComment=" + commID;
+				var myData = {deleteComment:commID};
 
 				jQuery.ajax({
 					type: "POST",
-					url: "responce.php",
-					dataType: "text",
+					url: "response.php",
 					data: myData,
-					success: function(responce){
-						$("#n_"+commID).fadeOut();
+					success: function(response){
+						$("#com_"+commID).fadeOut();
 					},
 					error:function(xhr, ajaxOptions, thrownError){
 						alert(thrownError);
@@ -87,27 +80,28 @@ include 'connect_to_db.php';
 				});
 			});
 
-			$("body").on("click", " #AddRep",function (e) {
-				//$("#AddRep").click(function(e){
+			$("body").on("click", ".reply_add",function (e) {
 				e.preventDefault();
 
 				var clickID = this.name.split("-");
 				var repID = clickID[2];
-				if ($("#reply_c_"+repID).val()==="")
+				if (($("#reply_c_"+repID).val()==="") || ($("#users_r"+repID).val==="") || ($("#email_r"+repID).val==""))
 				{
-					alert("Введите текст!");
+					alert("Заполните поля!");
 					return false;
 				}
-				var data = { id_comment: repID, replyComment: $("#reply_c_"+repID).val()};
+				var data = { level: $("#level_of_"+repID).val(), parent_user: $("#parent_user"+repID).val(), id_comment: repID, replyComment: $("#reply_c_"+repID).val(), users_r: $("#users_r"+repID).val(), email_r: $("#email_r"+repID).val()};
 
 				jQuery.ajax({
 					type: "POST",
-					url: "responce.php",
-					dataType: "text",
+					url: "response.php",
 					data: data,
-					success: function(responce) {
-						$("#reps_"+repID).append(responce);
+					success: function(response) {
+						$("#reply_comment_"+repID).append(response);
+						$("#users_r"+repID).val('');
+						$("#email_r"+repID).val('');
 						$("#reply_c_"+repID).val('');
+						$("#block-reply-"+repID).hide();
 
 					},
 					error:function(xhr, ajaxOptions, thrownError){
@@ -115,109 +109,106 @@ include 'connect_to_db.php';
 					}
 				});
 			});
-			$("body").on("click", "#comms .del_reply",function (e) {
-				e.preventDefault();
-				var clickID = this.id.split("-");
-				var commID = clickID[2];
-				var myData = "deleteReply=" + commID;
 
-				jQuery.ajax({
-					type: "POST",
-					url: "responce.php",
-					dataType: "text",
-					data: myData,
-					success: function(responce){
-						$("#re_"+commID).fadeOut();
-
-					},
-					error:function(xhr, ajaxOptions, thrownError){
-						alert(thrownError);
-					}
-				});
-			});
-			//$(".reply_open").click(function (e) {
-			$("div").on("click", " #comms .reply_open",function (e) {
+			$("body").on("click", " #block_comm .reply_open",function (e) {
 				e.preventDefault();
 				var clickID = this.id.split("-");
 				var commID = clickID[2];
 				$("#block-reply-"+commID).show();
 			});
-			$("div").on("click", " #comms .cancel_rep",function (e) {
+
+			$("body").on("click", "  .cancel_rep",function (e) {
 				e.preventDefault();
 				var clickID = this.id.split("-");
 				var commID = clickID[2];
 				$("#block-reply-"+commID).hide();
-
 			});
-		});
+		
 
+		});
+		function CommentChild(parent, id) {
+			document.getElementById("reply_comment_"+parent).appendChild(document.getElementById("com_"+id));
+		}
 	</script>
-</head>
-<body>
+
 <FORM method="POST" role="form">
 
-	<div class="form-group" style="width:800px" >
+	<div  style="width:800px; margin-left: 20px" >
 		<label>Комментарий</label>
+		<input class="form-control" placeholder="Имя" width="100" id="users">
+		<input type="email" class="form-control" placeholder="E-mail" id="email_" width="100">
 		<textarea id="commenT" name="comme" cols="30" rows="5" class="form-control"  placeholder="Добавьте комментарий" ></textarea>
 		<button id="AddComm" class="btn btn-primary" name='add'> Добавить</button>
 	</div>
-    <?php
-$sql="SELECT * FROM comment ORDER BY id DESC";
-$result=$conn->query($sql);
-	echo "<div>";
-    echo "<ul  id='comms' >";
-if ($result->num_rows > 0) {
-	while ($row = $result->fetch_assoc()) {
-		echo "<div>";
-		echo "<li id='n_" . $row["id"] . "'>";
-		echo "<div>";
-		echo "Добавлено ".$row["date_add"]." в ".$row["time_add"];
-		echo "</div><br>";
-		echo strval($row["text_comm"]);
-		echo "<br><br>";
-		echo "<div>";
-		echo "<a href='#' class='reply_open' id='rep-open-".$row["id"]."'>Ответить</a>";
-		echo " ";
-		echo "<a href='#'  class='del_Comment' id='del-com-" . $row["id"] . "'>Удалить</a>";
-		echo "</div>";
-		echo "<div class='reply_Comment' id='block-reply-".$row["id"]."'>";
-		echo "<label>Ответ</label>";
-		echo '<textarea id="reply_c_' . $row["id"] . '" cols="30" rows="5" class="form-control"  placeholder="Добавьте ответ" ></textarea>';
-		echo "<div>";
-		echo "<button id='AddRep' class='btn btn-primary' name='rep-com-" . $row["id"] . "'>Ответить</button>";
-		echo "<button  class='btn btn-danger cancel_rep' id='cancel-reply-" . $row["id"] . "'>Отмена</button>";
-		echo "</div>";
-		echo "</div>";
-		$sql_r = "SELECT * FROM reply WHERE id_com = " . $row["id"];
-		$result2 = $conn->query($sql_r);
-		echo "<div>";
-		echo "<ul class='repl' id='reps_".$row["id"]."' >";
-		if ($result2->num_rows > 0) {
-			while ($row2 = $result2->fetch_assoc()) {
-				echo "<li style='background-color: lightblue' id='re_" . $row2["id"] . "'>";
-				echo "<div>";
-				echo "Добавлено ".$row2["date_add"]." в ".$row2["time_add"];
-				echo "</div><br>";
-				echo $row2["text"];
-				echo "<br><br>";
-				echo "<div>";
-				echo "<a href='#' class='del_reply' id='del-re-" . $row2["id"] . "'>Удалить</a>";
-				echo "</div>";
-				echo "</li>";
+
+	<?php
+	$comment_MAX=5;
+	$counter=-1;
+
+	echo "<div id='comms'>";
+	$com_id=array();
+	
+	$com_id[0]=0;
+	while ($counter<$comment_MAX){
+		$counter++;
+		$commentInfo=array();
+		$commentInfo=get_Comment($com_id);
+
+		if (count($commentInfo)==0){break;}
+
+		$com_id=array();
+		for ($i=0; $i<count($commentInfo); $i++) {
+			$com_id[$i] = $commentInfo[$i]["id"];
+            echo "<div class='com_parent'  id='com_".$commentInfo[$i]["id"]."'>";
+
+			echo "<div id='block_comm' style='margin-left: " . (20 * ($counter + 1)) . "px; '>";
+			echo "<input id='level_of_".$commentInfo[$i]["id"]."' value='".$counter."' style='display:none;'>";
+			echo "<input  id='parent_user".$commentInfo[$i]["id"]."' value='".$commentInfo[$i]["user_"]."' style='display:none;'>";
+			echo "<div class='block_comm'>";
+			echo "<div>";
+			echo "<p class='users'>" . $commentInfo[$i]["user_"]."</p>"  ;
+			echo "<p >   Добавлено " . $commentInfo[$i]["date_add"] . " в " . $commentInfo[$i]["time_add"]."</p>";
+			if ($commentInfo[$i]["id_parent"]!=0){
+				$sql="SELECT user_ FROM comment WHERE id = ".$commentInfo[$i]["id_parent"];
+				$result=$conn->query($sql);
+				$row = $result->fetch_assoc();
+				echo "<br>Ответ пользователю <B>".$row["user_"]. "</B> <br>";
+			}
+			echo "</div><br>";
+			echo nl2br($commentInfo[$i]["text_comm"]);
+			//echo $i;
+			echo "<br><br>";
+			echo "<div>";
+			echo "<a href='#' class='reply_open' id='rep-open-" . $commentInfo[$i]["id"] . "'>Ответить</a>";
+			echo " ";
+			echo "<a href='#'  class='del_Comment' id='del-com-" . $commentInfo[$i]["id"] . "'>Удалить</a>";
+			echo "</div>";
+			echo "<div class='reply_Comment' id='block-reply-" . $commentInfo[$i]["id"] . "'>";
+			echo "<label>Ответ</label>";
+			echo '<input class="form-control" placeholder="Имя" width="100" id="users_r'. $commentInfo[$i]["id"].'">';
+			echo '<input type="email" class="form-control" placeholder="E-mail" id="email_r'. $commentInfo[$i]["id"].'" width="100">';
+			echo '<textarea id="reply_c_' . $commentInfo[$i]["id"] .'" cols="30" rows="5" class="form-control"  placeholder="Добавьте ответ" ></textarea>';
+			echo "<div>";
+			echo "<button id='AddRep' class='btn btn-primary reply_add' name='rep-com-" . $commentInfo[$i]["id"] . "'>Ответить</button>";
+			echo "<button  class='btn btn-danger cancel_rep' id='cancel-reply-" . $commentInfo[$i]["id"] . "'>Отмена</button>";
+			echo "</div>";
+			echo "</div>";
+			echo "</div>";
+			echo "<div style='background-color: lightblue;' id='reply_comment_". $commentInfo[$i]["id"]."'>";
+			echo "</div>";
+			echo "</div>";
+			echo "</div>";
+			if ($counter != 0) {
+				echo "<script type='text/javascript'>CommentChild({$commentInfo[$i]['id_parent']},{$commentInfo[$i]['id']});</script>";
 			}
 		}
 
-		echo "</ul>";
-		echo "</div>";
-		echo "</li>";
-		echo "</div>";
 	}
-	$conn->close();
-}
-	echo "</ul>";
-	echo "</div>";
-?>
 
+ 
+	echo "</div>";
+	$conn->close();
+?>
 
 </FORM>
 </body>
